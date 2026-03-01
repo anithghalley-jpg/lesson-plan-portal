@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lesson Plan Portal — HOD Dashboard</title>
+    <meta name="description" content="HOD dashboard to review teacher lesson plans and record voice/text feedback." />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        body {
+            padding-bottom: 80px;
+        }
+
+        .main {
+            padding-top: 32px;
+        }
+
+        /* Filters */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: rgba(79, 142, 247, 0.15);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .date-filter {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-primary);
+            outline: none;
+            color-scheme: dark;
+        }
+
+        /* Teacher row expand */
+        .submission-row {
+            cursor: pointer;
+        }
+
+        .submission-row:hover td {
+            background: rgba(79, 142, 247, 0.05) !important;
+        }
+
+        /* Action buttons */
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-inprogress {
+            background: rgba(248, 113, 113, 0.12);
+            color: var(--accent-red);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: fadeInUp 0.2s ease;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 580px;
+            background: #111827;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            margin: auto;
+        }
+
+        .modal-header {
+            padding: 22px 28px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: #111827;
+            z-index: 2;
+        }
+
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: rgba(248, 113, 113, 0.1);
+            color: var(--accent-red);
+        }
+
+        .modal-body {
+            padding: 28px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 16px 28px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            position: sticky;
+            bottom: 0;
+            background: #111827;
+            z-index: 2;
+        }
+
+        .teacher-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+        }
+
+        .teacher-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-teal));
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        @media (max-width: 900px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── Navbar ── -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="nav-brand">
+                <div class="nav-logo">📚</div>
+                <div>
+                    <div class="nav-title">Lesson Plan Portal</div>
+                    <div class="nav-subtitle">HOD Dashboard</div>
+                </div>
+            </a>
+            <div class="nav-user">
+                <span id="nav-role" class="nav-badge badge-hod">HOD</span>
+                <span id="nav-name" style="font-size:0.88rem; color:var(--text-secondary);"></span>
+                <button id="nav-logout" class="nav-logout">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── Main ── -->
+    <div class="container main">
+
+        <div class="page-hero fade-in">
+            <h1 class="page-title"><span>HOD</span> Review Dashboard</h1>
+            <p class="page-desc">Review lesson plans for your domain, request revisions, or approve files.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row fade-in">
+            <div class="stat-card">
+                <div class="stat-icon">📄</div>
+                <div>
+                    <div class="stat-value" id="stat-total">—</div>
+                    <div class="stat-label">Total Submissions</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div>
+                    <div class="stat-value" id="stat-pending">—</div>
+                    <div class="stat-label">Pending Review</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔄</div>
+                <div>
+                    <div class="stat-value" id="stat-inprogress">—</div>
+                    <div class="stat-label">In Progress (Revised)</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎓</div>
+                <div>
+                    <div class="stat-value" id="stat-domain">—</div>
+                    <div class="stat-label">Domain filter</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Submissions Table ── -->
+        <div class="card fade-in">
+            <div class="card-header"
+                style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <div class="card-title">📋 Domain Submissions</div>
+                    <div class="card-subtitle">Showing lesson plans from your domain teachers</div>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <input type="text" id="search-input" placeholder="🔍 Search teacher or file…"
+                        style="width:200px; padding:8px 14px; font-size:0.85rem;" />
+                    <button class="btn btn-secondary btn-sm" id="refresh-btn">🔄 Refresh</button>
+                </div>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="filter-bar">
+                <div style="display:flex; gap:8px;">
+                    <button class="filter-btn active" data-filter="all">All Status</button>
+                    <button class="filter-btn" data-filter="Pending">⏳ Pending</button>
+                    <button class="filter-btn" data-filter="In Progress">🔄 In Progress</button>
+                    <button class="filter-btn" data-filter="Approved">✅ Approved</button>
+                </div>
+                <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+                    <span style="font-size:0.8rem; color:var(--text-muted);">From Date:</span>
+                    <input type="date" id="date-filter" class="date-filter" />
+                    <button class="btn btn-ghost btn-sm" id="clear-date" style="padding:4px 8px;"
+                        title="Clear Date">✕</button>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table id="submissions-table">
+                    <thead>
+                        <tr>
+                            <th>Teacher / Domain</th>
+                            <th>File Name</th>
+                            <th>Status / Timing</th>
+                            <th>Teacher Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissions-body">
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="spinner"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /container -->
+
+    <!-- ══════════════════════════════════════
+       FEEDBACK MODAL
+  ══════════════════════════════════════ -->
+    <div class="modal-overlay hidden" id="feedback-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title">📝 Give Feedback</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:3px;" id="modal-subtitle">
+                        Reviewing: —</div>
+                </div>
+                <button class="modal-close" id="modal-close">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- PDF Quick-link -->
+                <div id="pdf-link-card"
+                    style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(79,142,247,0.08); border:1px solid rgba(79,142,247,0.2); border-radius:var(--radius-sm); margin-bottom:20px;">
+                    <span style="font-size:1.4rem;">📄</span>
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-weight:600; font-size:0.88rem;" id="modal-filename">—</div>
+                        <div style="font-size:0.74rem; color:var(--text-secondary);" id="modal-teacher">—</div>
+                    </div>
+                    <a id="modal-pdf-link" href="#" target="_blank" class="btn btn-ghost btn-sm">Open PDF 🔗</a>
+                </div>
+
+                <!-- Teacher Note Alert -->
+                <div id="modal-teachernote-card"
+                    style="display:none; padding:14px; background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.3); border-radius:var(--radius-sm); margin-bottom:20px; font-size:0.85rem;">
+                    <strong style="color:var(--accent-green); display:block; margin-bottom:4px;">Teacher's Revision
+                        Note:</strong>
+                    <span id="modal-teachernote-text" style="color:var(--text-secondary);"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>1. Review Status</label>
+                    <select id="modal-status" style="font-weight:600;">
+                        <option value="Approved">✅ Approved (No further action needed)</option>
+                        <option value="In Progress">⏳ In Progress (Needs revision/resubmission)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>2. Text Feedback (Optional)</label>
+                    <textarea id="modal-text" rows="4" placeholder="Type your feedback here..."></textarea>
+                </div>
+
+                <!-- Recorder -->
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>3. Voice Feedback (Optional)</label>
+                    <div
+                        style="padding:20px; border:1px solid var(--border); border-radius:var(--radius-sm); background:rgba(255,255,255,0.02); display:flex; flex-direction:column; align-items:center; gap:12px;">
+                        <button class="record-btn" id="record-btn" title="Press to record"
+                            style="width:50px; height:50px; font-size:1.2rem;">🎙️</button>
+                        <div class="record-timer" id="rec-timer" style="font-size:1.4rem;">00:00</div>
+                        <div class="record-status" id="rec-status" style="font-size:0.75rem;">Press to record voice note
+                        </div>
+                        <div id="audio-preview" style="display:none; width:100%;"><audio id="audio-playback"
+                                controls></audio></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+                <button class="btn btn-success" id="submit-feedback-btn">
+                    📤 Save & Notify via Email
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // ── Auth Guard ──
+        const session = Auth.requireAuth('hod');
+        if (!session) throw new Error('Unauthorized');
+        document.getElementById('stat-domain').textContent = session.domain || 'All';
+
+        // ── State ──
+        let allSubmissions = [];
+        let activeFilter = 'all';
+        let filterDate = '';
+        let activeSubmission = null;
+
+        // Recorder State
+        let recorder = null;
+        let timerInterval = null;
+        let recordedBlob = null;
+        let recordSecs = 0;
+
+        // ── Load Submissions ──
+        async function loadSubmissions() {
+            const tbody = document.getElementById('submissions-body');
+            tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="spinner"></div></div></td></tr>`;
+            try {
+                const data = await API.getSubmissions();
+                allSubmissions = data.submissions || [];
+                renderTable();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">⚠️ Error loading data.</div></td></tr>`;
+            }
+        }
+
+        function renderTable() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            let rows = allSubmissions;
+
+            // Filter by Status
+            if (activeFilter !== 'all') rows = rows.filter(r => r.status === activeFilter);
+
+            // Filter by Search
+            if (search) {
+                rows = rows.filter(r => (r.teacherName || '').toLowerCase().includes(search) || (r.fileName || '').toLowerCase().includes(search));
+            }
+
+            // Filter by Date
+            if (filterDate) {
+                rows = rows.filter(r => r.timestamp && r.timestamp.startsWith(filterDate));
+            }
+
+            // Update stats based on all Submissions (unfiltered by text, but yes Domain is already done by server)
+            document.getElementById('stat-total').textContent = allSubmissions.length;
+            document.getElementById('stat-pending').textContent = allSubmissions.filter(r => r.status === 'Pending').length;
+            document.getElementById('stat-inprogress').textContent = allSubmissions.filter(r => r.status === 'In Progress').length;
+
+            const tbody = document.getElementById('submissions-body');
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">📭 No matching submissions found</div></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = rows.map((r, i) => {
+                const initials = (r.teacherName || 'T').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+                let statusClass = 'status-new';
+                if (r.status === 'Approved') statusClass = 'status-reviewed';
+                if (r.status === 'In Progress') statusClass = 'status-inprogress';
+
+                const noteText = r.teacherNote ? `📝 <span style="font-style:italic;">"${r.teacherNote}"</span>` : '<span style="-opacity:0.5">—</span>';
+
+                return `
+          <tr class="submission-row">
+            <td onclick="openFeedbackModal(${JSON.stringify(r).replace(/"/g, '&quot;')})">
+              <div class="teacher-chip" style="margin-bottom:4px;">
+                <div class="teacher-avatar">${initials}</div>
+                <div><div>${r.teacherName || r.teacherUsername}</div><div style="font-size:0.7rem; color:var(--text-muted);">${r.domain || 'All'}</div></div>
+              </div>
+            </td>
+            <td onclick="openFeedbackModal(${JSON.stringify(r).replace(/"/g, '&quot;')})" style="font-weight:500; color:var(--text-primary); max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.fileName}">📄 ${r.fileName || '—'}</td>
+            <td onclick="openFeedbackModal(${JSON.stringify(r).replace(/"/g, '&quot;')})">
+              <span class="status ${statusClass}" style="margin-bottom:4px;">${r.status || 'Pending'}</span><br/>
+              <span style="font-size:0.75rem; color:var(--text-secondary);">${FileUtils.formatDate(r.timestamp)}</span>
+            </td>
+            <td onclick="openFeedbackModal(${JSON.stringify(r).replace(/"/g, '&quot;')})" style="font-size:0.8rem; color:var(--text-secondary); max-width:250px; overflow:hidden;">
+              ${noteText}
+            </td>
+            <td>
+              <div class="actions-cell">
+                <a href="${r.driveLink}" target="_blank" class="btn btn-ghost btn-sm" onclick="event.stopPropagation()">PDF 🔗</a>
+                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openFeedbackModal(${JSON.stringify(r).replace(/"/g, '&quot;')})">
+                  📝 Feedback
+                </button>
+                ${r.status === 'In Progress' ? `<button class="btn btn-sm" style="background:rgba(251,191,36,0.15); color:var(--accent-amber); border:1px solid rgba(251,191,36,0.3);" title="Send Reminder Email" onclick="event.stopPropagation(); sendReminder('${r.id}', '${r.teacherUsername}')">🔔 Remind</button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+            }).join('');
+        }
+
+        // ── Filters & Events ──
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active'); activeFilter = btn.dataset.filter; renderTable();
+            });
+        });
+
+        document.getElementById('search-input').addEventListener('input', renderTable);
+        document.getElementById('refresh-btn').addEventListener('click', loadSubmissions);
+
+        document.getElementById('date-filter').addEventListener('change', (e) => { filterDate = e.target.value; renderTable(); });
+        document.getElementById('clear-date').addEventListener('click', () => { document.getElementById('date-filter').value = ''; filterDate = ''; renderTable(); });
+
+        // ── Email Reminder ──
+        async function sendReminder(subId, teacherUsername) {
+            Toast.show('Sending reminder email...', 'info');
+            try {
+                const res = await API.sendReminderEmail(subId, teacherUsername);
+                if (res.success !== false) Toast.show('Reminder sent successfully! ✅', 'success');
+                else Toast.show('Failed: ' + res.message, 'error');
+            } catch (err) { Toast.show('Error sending reminder.', 'error'); }
+        }
+
+        // ══════════════════════════════════════
+        //  FEEDBACK MODAL
+        // ══════════════════════════════════════
+        const fModal = document.getElementById('feedback-modal');
+
+        function openFeedbackModal(submission) {
+            activeSubmission = submission;
+            resetRecorder();
+
+            document.getElementById('modal-subtitle').textContent = `Teacher: ${submission.teacherName}`;
+            document.getElementById('modal-filename').textContent = submission.fileName;
+            document.getElementById('modal-teacher').textContent = `Uploaded: ${FileUtils.formatDate(submission.timestamp)}`;
+
+            const noteCard = document.getElementById('modal-teachernote-card');
+            if (submission.teacherNote) {
+                document.getElementById('modal-teachernote-text').textContent = submission.teacherNote;
+                noteCard.style.display = 'block';
+            } else {
+                noteCard.style.display = 'none';
+            }
+
+            document.getElementById('modal-pdf-link').href = submission.driveLink;
+
+            // Pre-fill existing text/status
+            document.getElementById('modal-status').value = submission.status === 'Approved' ? 'Approved' : 'In Progress';
+            document.getElementById('modal-text').value = submission.textFeedback || '';
+
+            fModal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            fModal.classList.add('hidden');
+            if (recorder && recorder.isRecording) recorder.stop();
+            resetRecorder();
+        }
+
+        document.getElementById('modal-close').addEventListener('click', closeModal);
+        document.getElementById('modal-cancel').addEventListener('click', closeModal);
+        fModal.addEventListener('click', e => { if (e.target === fModal) closeModal(); });
+
+        // ── Recorder Control ──
+        const recordBtn = document.getElementById('record-btn');
+        const recTimer = document.getElementById('rec-timer');
+        const recStatus = document.getElementById('rec-status');
+        const audioPreview = document.getElementById('audio-preview');
+        const audioPlayback = document.getElementById('audio-playback');
+
+        recordBtn.addEventListener('click', async () => {
+            if (!recorder || !recorder.isRecording) {
+                try {
+                    recorder = new AudioRecorder({
+                        onStop: (blob) => {
+                            recordedBlob = blob;
+                            audioPlayback.src = URL.createObjectURL(blob);
+                            audioPreview.style.display = 'block';
+                            recStatus.textContent = 'Voice saved. Preview below.';
+                        }
+                    });
+                    await recorder.start();
+                    recordBtn.classList.add('recording'); recordBtn.textContent = '⏹️';
+                    recStatus.textContent = 'Recording… click to stop.';
+                    audioPreview.style.display = 'none'; recordSecs = 0;
+                    timerInterval = setInterval(() => {
+                        recordSecs++;
+                        const mm = String(Math.floor(recordSecs / 60)).padStart(2, '0');
+                        const ss = String(recordSecs % 60).padStart(2, '0');
+                        recTimer.textContent = `${mm}:${ss}`;
+                    }, 1000);
+                } catch (err) { Toast.show('Microphone access denied.', 'error'); }
+            } else {
+                recorder.stop(); clearInterval(timerInterval);
+                recordBtn.classList.remove('recording'); recordBtn.textContent = '🎙️';
+            }
+        });
+
+        function resetRecorder() {
+            recorder = null; recordedBlob = null; recordSecs = 0; clearInterval(timerInterval);
+            recordBtn.classList.remove('recording'); recordBtn.textContent = '🎙️';
+            recTimer.textContent = '00:00'; recStatus.textContent = 'Press to record voice note';
+            audioPreview.style.display = 'none'; audioPlayback.src = '';
+        }
+
+        // ── Submit Feedback ──
+        const submitBtn = document.getElementById('submit-feedback-btn');
+        submitBtn.addEventListener('click', async () => {
+            if (!activeSubmission) return;
+            const status = document.getElementById('modal-status').value;
+            const text = document.getElementById('modal-text').value.trim();
+
+            if (!recordedBlob && !text && status !== 'Approved') {
+                Toast.show('Please provide text or voice feedback, or Approve it.', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true; submitBtn.innerHTML = '<span class="spinner"></span> Saving…';
+
+            try {
+                const base64Audio = recordedBlob ? await FileUtils.toBase64(recordedBlob) : null;
+                await API.submitFeedback(
+                    activeSubmission.id || activeSubmission.timestamp,
+                    activeSubmission.teacherUsername,
+                    text,
+                    base64Audio,
+                    status
+                );
+                Toast.show(`Feedback sent to teacher via Email! ✅`, 'success');
+                closeModal(); loadSubmissions();
+            } catch (err) { Toast.show('Error saving feedback.', 'error'); }
+
+            submitBtn.disabled = false; submitBtn.innerHTML = '📤 Save & Notify via Email';
+        });
+
+        // ── Init ──
+        loadSubmissions();
+    </script>
+</body>
+
+</html>

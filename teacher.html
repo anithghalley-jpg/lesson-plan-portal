@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lesson Plan Portal — Teacher</title>
+    <meta name="description" content="Upload your lesson plans securely and track their review status." />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        body {
+            padding-bottom: 60px;
+        }
+
+        .main {
+            padding-top: 32px;
+        }
+
+        /* File preview chip */
+        .file-chip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: rgba(79, 142, 247, 0.08);
+            border: 1px solid rgba(79, 142, 247, 0.25);
+            border-radius: var(--radius-sm);
+            margin-top: 10px;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .file-chip-icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .file-chip-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-chip-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-chip-size {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Submission row action */
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .voice-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            background: rgba(167, 139, 250, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            color: var(--accent-purple);
+            text-decoration: none;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .voice-pill:hover {
+            background: rgba(167, 139, 250, 0.2);
+        }
+
+        .status-inprogress {
+            background: rgba(248, 113, 113, 0.12);
+            color: var(--accent-red);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        .status-inprogress::before {
+            background: var(--accent-red);
+            animation: pulse 2s infinite;
+        }
+
+        /* Stats bar */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        @media (max-width: 600px) {
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: fadeInUp 0.2s ease;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 500px;
+            background: #111827;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-header {
+            padding: 22px 28px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 28px;
+        }
+
+        .modal-footer {
+            padding: 16px 28px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── Navbar ── -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="nav-brand">
+                <div class="nav-logo">📚</div>
+                <div>
+                    <div class="nav-title">Lesson Plan Portal</div>
+                    <div class="nav-subtitle">Teacher View</div>
+                </div>
+            </a>
+            <div class="nav-user">
+                <span id="nav-role" class="nav-badge badge-teacher">Teacher</span>
+                <span id="nav-name" style="font-size:0.88rem; color:var(--text-secondary);"></span>
+                <button id="nav-logout" class="nav-logout">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── Main ── -->
+    <div class="container main">
+
+        <div class="page-hero fade-in">
+            <h1 class="page-title">My <span>Lesson Plans</span></h1>
+            <p class="page-desc">Upload multiple lesson plans to your assigned domain. The HOD will review them.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row fade-in" id="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon">📄</div>
+                <div>
+                    <div class="stat-value" id="stat-total">—</div>
+                    <div class="stat-label">Total Uploaded</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div>
+                    <div class="stat-value" id="stat-pending">—</div>
+                    <div class="stat-label">Pending / In Progress</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div>
+                    <div class="stat-value" id="stat-reviewed">—</div>
+                    <div class="stat-label">Approved</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2" style="gap:24px; align-items:start;">
+
+            <!-- ── Upload Card ── -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-title">📤 Upload Lesson Plans</div>
+                    <div class="card-subtitle">Select multiple PDFs</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="domain-select">Subject Domain</label>
+                    <select id="domain-select">
+                        <option value="" disabled selected>Loading domains…</option>
+                    </select>
+                </div>
+
+                <!-- Drop Zone -->
+                <div class="drop-zone" id="drop-zone">
+                    <input type="file" id="pdf-input" accept="application/pdf" multiple />
+                    <div class="drop-icon">📄</div>
+                    <div class="drop-text">Drag &amp; drop PDFs here</div>
+                    <div class="drop-hint">or click to browse multiple files</div>
+                </div>
+
+                <!-- File List -->
+                <div id="file-list" style="margin-top:16px;"></div>
+
+                <!-- Progress -->
+                <div id="upload-progress" class="progress-wrap" style="display:none; margin-top:16px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span style="font-size:0.8rem; color:var(--text-secondary);"
+                            id="progress-label">Uploading…</span>
+                        <span style="font-size:0.8rem; color:var(--accent-blue);" id="progress-pct">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <button class="btn btn-primary btn-full" id="upload-btn" disabled>
+                    📤 Upload &amp; Submit
+                </button>
+            </div>
+
+            <!-- ── Guidelines Card ── -->
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <div class="card fade-in card-sm">
+                    <div class="card-title" style="margin-bottom:14px;">📋 Submission Guidelines</div>
+                    <ul
+                        style="padding-left:18px; display:flex; flex-direction:column; gap:10px; color:var(--text-secondary); font-size:0.88rem; line-height:1.6;">
+                        <li>Select your exact <strong style="color:var(--text-primary);">Domain</strong> so the right
+                            HOD gets it.</li>
+                        <li>You can select and upload <strong style="color:var(--text-primary);">multiple files at
+                                once</strong>.</li>
+                        <li>If a plan is marked <strong style="color:var(--accent-red);">In Progress</strong>, you must
+                            upload a revised PDF.</li>
+                        <li>Feedback from HODs will be visible on your dashboard and via Telegram.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Submissions Table ── -->
+        <div class="card fade-in" style="margin-top:28px;">
+            <div class="card-header"
+                style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <div class="card-title">📂 My Submissions</div>
+                    <div class="card-subtitle">All lesson plans you have uploaded</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="refresh-btn">🔄 Refresh</button>
+            </div>
+
+            <div class="table-wrap">
+                <table id="submissions-table">
+                    <thead>
+                        <tr>
+                            <th>File Info</th>
+                            <th>Status / Feedback</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissions-body">
+                        <tr>
+                            <td colspan="3">
+                                <div class="empty-state">
+                                    <div class="spinner"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /container -->
+
+    <!-- ══════════════════════════════════════
+       REVISION UPLOAD MODAL
+  ══════════════════════════════════════ -->
+    <div class="modal-overlay hidden" id="revision-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title">🔄 Submit Revision</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);" id="rev-filename">File.pdf</div>
+                </div>
+                <button class="modal-close" id="rev-close">✕</button>
+            </div>
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label>Upload New PDF</label>
+                    <input type="file" id="rev-file" accept="application/pdf" style="padding:8px;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Note to HOD (Optional)</label>
+                    <textarea id="rev-note" rows="3"
+                        placeholder="e.g. I have updated the learning objectives as requested..."></textarea>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="rev-cancel">Cancel</button>
+                <button class="btn btn-success" id="rev-submit">📤 Replace File</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        const session = Auth.requireAuth('teacher');
+        if (!session) throw new Error('Unauthorized');
+
+        let selectedFiles = [];
+        let activeRevisionId = null;
+
+        // ── Load Domains ──
+        async function initDomains() {
+            const select = document.getElementById('domain-select');
+            try {
+                const res = await API.getDomains();
+                if (res.domains && res.domains.length > 0) {
+                    select.innerHTML = `<option value="" disabled selected>Select your domain</option>` + res.domains.map(d => `<option value="${d}">${d}</option>`).join('');
+
+                    // Pre-select if teacher has default domain
+                    if (session.domain) select.value = session.domain;
+                } else {
+                    select.innerHTML = `<option value="All">General</option>`;
+                }
+            } catch (e) {
+                select.innerHTML = `<option value="All">General</option>`;
+            }
+        }
+        initDomains();
+
+        // ── Drop Zone (Multi-file) ──
+        const dropZone = document.getElementById('drop-zone');
+        const pdfInput = document.getElementById('pdf-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileListEl = document.getElementById('file-list');
+
+        function initMultiDropZone() {
+            ['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('drag-over'); }));
+            ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('drag-over'); }));
+            dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+            pdfInput.addEventListener('change', () => handleFiles(pdfInput.files));
+        }
+        initMultiDropZone();
+
+        function handleFiles(files) {
+            if (!files.length) return;
+            for (let f of files) {
+                if (f.type !== 'application/pdf') { Toast.show(`${f.name} is not a PDF`, 'error'); continue; }
+                if (f.size > 10 * 1024 * 1024) { Toast.show(`${f.name} is over 10MB`, 'error'); continue; }
+                // check dupe
+                if (selectedFiles.find(sf => sf.name === f.name)) continue;
+                selectedFiles.push(f);
+            }
+            renderFileList();
+        }
+
+        function removeFile(idx) {
+            selectedFiles.splice(idx, 1);
+            renderFileList();
+        }
+
+        function renderFileList() {
+            fileListEl.innerHTML = selectedFiles.map((f, i) => `
+        <div class="file-chip">
+          <div class="file-chip-icon">📄</div>
+          <div class="file-chip-info">
+            <div class="file-chip-name">${f.name}</div>
+            <div class="file-chip-size">${FileUtils.formatSize(f.size)}</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="removeFile(${i})" style="padding:4px 8px;">✕</button>
+        </div>
+      `).join('');
+
+            uploadBtn.disabled = selectedFiles.length === 0 || !document.getElementById('domain-select').value;
+        }
+
+        document.getElementById('domain-select').addEventListener('change', renderFileList);
+
+        // ── Upload Submissions ──
+        uploadBtn.addEventListener('click', async () => {
+            const domain = document.getElementById('domain-select').value;
+            if (!domain) { Toast.show("Please select a domain", "error"); return; }
+            if (!selectedFiles.length) return;
+
+            uploadBtn.disabled = true; uploadBtn.innerHTML = '<span class="spinner"></span> Processing…';
+            const progressWrap = document.getElementById('upload-progress');
+            const progressFill = document.getElementById('progress-fill');
+            const progressPct = document.getElementById('progress-pct');
+            progressWrap.style.display = 'block';
+
+            try {
+                progressPct.textContent = 'Preparing base64…'; progressFill.style.width = '20%';
+                const filePayloads = await Promise.all(selectedFiles.map(async f => ({
+                    filename: f.name,
+                    mimeType: f.type,
+                    base64Data: await FileUtils.toBase64(f)
+                })));
+
+                progressPct.textContent = 'Uploading files…'; progressFill.style.width = '60%';
+
+                await API.uploadLessonPlan(filePayloads, domain);
+
+                progressFill.style.width = '100%'; progressPct.textContent = 'Done!';
+                Toast.show(`${selectedFiles.length} file(s) uploaded successfully! ✅`, 'success');
+
+                selectedFiles = [];
+                renderFileList();
+                setTimeout(() => progressWrap.style.display = 'none', 1000);
+                loadSubmissions();
+            } catch (err) {
+                Toast.show('Upload failed. Try again.', 'error');
+            }
+            uploadBtn.disabled = false; uploadBtn.innerHTML = '📤 Upload &amp; Submit';
+        });
+
+        // ── Load Submissions ──
+        async function loadSubmissions() {
+            const tbody = document.getElementById('submissions-body');
+            tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="spinner"></div></div></td></tr>`;
+
+            try {
+                const data = await API.getTeacherSubmissions(session.username);
+                const rows = data.submissions || [];
+
+                document.getElementById('stat-total').textContent = rows.length;
+                document.getElementById('stat-pending').textContent = rows.filter(r => r.status === 'Pending' || r.status === 'In Progress').length;
+                document.getElementById('stat-reviewed').textContent = rows.filter(r => r.status === 'Approved').length;
+
+                if (rows.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">No submissions yet</div></div></td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = rows.map(r => {
+                    let statusClass = 'status-new';
+                    if (r.status === 'Approved') statusClass = 'status-reviewed';
+                    if (r.status === 'In Progress') statusClass = 'status-inprogress';
+
+                    let feedbackHTML = '';
+                    if (r.textFeedback) feedbackHTML += `<div style="font-size:0.8rem; background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:6px; margin-top:8px; border-left:2px solid var(--accent-purple); color:var(--text-secondary);">💬 "${r.textFeedback}"</div>`;
+                    if (r.voiceLink) feedbackHTML += `<div style="margin-top:8px;"><a href="${r.voiceLink}" target="_blank" class="voice-pill">🎙️ Listen to Voice Feedback</a></div>`;
+                    if (!feedbackHTML && r.status === 'Pending') feedbackHTML = `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Waiting for review...</div>`;
+
+                    let actionsHTML = `<a href="${r.driveLink}" target="_blank" class="btn btn-ghost btn-sm">PDF 🔗</a>`;
+                    if (r.status === 'In Progress') {
+                        actionsHTML += `<button class="btn btn-primary btn-sm" onclick="openRevisionModal('${r.id}', '${r.fileName.replace(/'/g, "\\'")}')">🔄 Resolve Needs</button>`;
+                    }
+
+                    return `
+            <tr>
+              <td>
+                <div style="font-weight:600; color:var(--text-primary); margin-bottom:2px;">📄 ${r.fileName}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">
+                  Domain: <strong>${r.domain || 'All'}</strong><br/>
+                  Date: ${FileUtils.formatDate(r.timestamp)}
+                </div>
+                ${r.teacherNote ? `<div style="font-size:0.75rem; color:var(--accent-blue); margin-top:4px;">📝 Note: ${r.teacherNote}</div>` : ''}
+              </td>
+              <td>
+                <span class="status ${statusClass}">${r.status || 'Pending'}</span>
+                ${feedbackHTML}
+              </td>
+              <td style="vertical-align:top;">
+                <div class="actions-cell">${actionsHTML}</div>
+              </td>
+            </tr>
+          `;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-text">Could not load list</div></div></td></tr>`;
+            }
+        }
+
+        document.getElementById('refresh-btn').addEventListener('click', loadSubmissions);
+
+        // ── REVISION FLOW ──
+        const revModal = document.getElementById('revision-modal');
+        const revFileInput = document.getElementById('rev-file');
+        const revNote = document.getElementById('rev-note');
+        const revSubmit = document.getElementById('rev-submit');
+
+        function openRevisionModal(id, filename) {
+            activeRevisionId = id;
+            document.getElementById('rev-filename').textContent = 'For: ' + filename;
+            revFileInput.value = '';
+            revNote.value = '';
+            revModal.classList.remove('hidden');
+        }
+
+        document.getElementById('rev-close').addEventListener('click', () => revModal.classList.add('hidden'));
+        document.getElementById('rev-cancel').addEventListener('click', () => revModal.classList.add('hidden'));
+
+        revSubmit.addEventListener('click', async () => {
+            if (!revFileInput.files.length) { Toast.show("Please select a new PDF first", "error"); return; }
+            const file = revFileInput.files[0];
+            if (file.type !== 'application/pdf') { Toast.show("Must be a PDF", "error"); return; }
+
+            revSubmit.disabled = true; revSubmit.innerHTML = 'Uploading…';
+
+            try {
+                const payload = { filename: file.name, mimeType: file.type, base64Data: await FileUtils.toBase64(file) };
+                await API.updateSubmission(activeRevisionId, payload, revNote.value.trim());
+
+                Toast.show("File updated successfully!", "success");
+                revModal.classList.add('hidden');
+                loadSubmissions();
+            } catch (e) {
+                Toast.show("Error replacing file", "error");
+            }
+
+            revSubmit.disabled = false; revSubmit.innerHTML = '📤 Replace File';
+        });
+
+        loadSubmissions();
+    </script>
+</body>
+
+</html>

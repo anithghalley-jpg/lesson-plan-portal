@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lesson Plan Portal — Login</title>
+  <meta name="description"
+    content="Secure portal for teachers to submit lesson plans and HODs to review and respond with feedback." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .login-wrap {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ── Left Panel ── */
+    .login-hero {
+      position: relative;
+      background: linear-gradient(145deg, #0a0e1a 0%, #111827 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 60px;
+      overflow: hidden;
+    }
+
+    .login-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 50% 20%, rgba(79, 142, 247, 0.18) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 50% at 10% 80%, rgba(167, 139, 250, 0.12) 0%, transparent 60%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 420px;
+    }
+
+    .hero-logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 32px;
+      box-shadow: 0 8px 32px rgba(79, 142, 247, 0.4);
+    }
+
+    .hero-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+
+    .hero-title .highlight {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-teal));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+    }
+
+    .feature-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .fi-blue {
+      background: rgba(79, 142, 247, 0.15);
+    }
+
+    .fi-green {
+      background: rgba(52, 211, 153, 0.15);
+    }
+
+    .fi-purple {
+      background: rgba(167, 139, 250, 0.15);
+    }
+
+    .fi-amber {
+      background: rgba(251, 191, 36, 0.15);
+    }
+
+    /* ── Right Panel ── */
+    .login-form-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 40px;
+      background: rgba(15, 22, 41, 0.6);
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-box h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .login-box p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    /* Role Cards */
+    .role-picker {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .role-card {
+      padding: 18px 14px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      text-align: center;
+      transition: var(--transition);
+      background: var(--bg-card);
+      position: relative;
+    }
+
+    .role-card input {
+      display: none;
+    }
+
+    .role-card:hover {
+      border-color: var(--border-active);
+      background: rgba(79, 142, 247, 0.05);
+    }
+
+    .role-card.selected {
+      border-color: var(--accent-blue);
+      background: rgba(79, 142, 247, 0.1);
+    }
+
+    .role-card.selected.hod-card {
+      border-color: var(--accent-purple);
+      background: rgba(167, 139, 250, 0.1);
+    }
+
+    .role-emoji {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .role-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .role-desc {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .check-mark {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      color: #fff;
+      font-size: 0.6rem;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .role-card.selected .check-mark {
+      display: flex;
+    }
+
+    .hod-card .check-mark {
+      background: var(--accent-purple);
+    }
+
+    .login-footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+      .login-wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .login-hero {
+        display: none;
+      }
+
+      .login-form-panel {
+        padding: 40px 24px;
+        min-height: 100vh;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-wrap">
+
+    <!-- ── Left: Hero ── -->
+    <div class="login-hero">
+      <div class="hero-content fade-in">
+        <div class="hero-logo">📚</div>
+        <h1 class="hero-title">
+          Lesson Plan<br />
+          <span class="highlight">Review Portal</span>
+        </h1>
+        <p class="hero-desc">
+          A streamlined system for teachers to submit lesson plans and HODs to review them with audio feedback — all
+          tracked in Google Sheets.
+        </p>
+        <div class="feature-list">
+          <div class="feature-item">
+            <div class="feature-icon fi-blue">📤</div>
+            PDF uploads stored in Google Drive
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon fi-green">💬</div>
+            WhatsApp notifications to HOD &amp; teachers
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon fi-purple">🎙️</div>
+            Voice feedback from HOD to teachers
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon fi-amber">📊</div>
+            All records in Google Sheets
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Right: Login Form ── -->
+    <div class="login-form-panel">
+      <div class="login-box fade-in">
+        <h2>Welcome back</h2>
+        <p>Enter your username and select your role to continue.</p>
+
+        <!-- Role Picker -->
+        <div class="role-picker">
+          <label class="role-card" id="role-teacher-card">
+            <input type="radio" name="role" value="teacher" />
+            <div class="check-mark">✓</div>
+            <div class="role-emoji">🧑‍🏫</div>
+            <div class="role-name">Teacher</div>
+            <div class="role-desc">Upload lesson plans</div>
+          </label>
+          <label class="role-card hod-card" id="role-hod-card">
+            <input type="radio" name="role" value="hod" />
+            <div class="check-mark">✓</div>
+            <div class="role-emoji">🏫</div>
+            <div class="role-name">HOD</div>
+            <div class="role-desc">Review &amp; give feedback</div>
+          </label>
+        </div>
+
+        <!-- Form -->
+        <form id="login-form">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="e.g. john.smith" autocomplete="username" required />
+          </div>
+
+          <div id="error-msg" style="
+            display:none;
+            padding: 10px 14px;
+            background: rgba(248,113,113,0.1);
+            border: 1px solid rgba(248,113,113,0.3);
+            border-radius: 8px;
+            color: var(--accent-red);
+            font-size: 0.82rem;
+            margin-bottom: 16px;
+          "></div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg" id="login-btn">
+            Sign In →
+          </button>
+        </form>
+
+        <div class="login-footer">
+          <p>Don't have an account? Contact your system administrator.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // ── Redirect if already logged in ──
+    const existing = Auth.getSession();
+    if (existing) {
+      window.location.href = existing.role === 'hod' ? 'hod.html' : 'teacher.html';
+    }
+
+    // ── Role Picker UI ──
+    let selectedRole = 'teacher';
+
+    document.querySelectorAll('.role-card input[type="radio"]').forEach(radio => {
+      // Default: select teacher
+      if (radio.value === 'teacher') {
+        radio.checked = true;
+        radio.closest('.role-card').classList.add('selected');
+      }
+
+      radio.addEventListener('change', () => {
+        document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+        radio.closest('.role-card').classList.add('selected');
+        selectedRole = radio.value;
+      });
+    });
+
+    // ── Login Form ──
+    const form = document.getElementById('login-form');
+    const errorEl = document.getElementById('error-msg');
+    const loginBtn = document.getElementById('login-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      if (!username || !selectedRole) return;
+
+      errorEl.style.display = 'none';
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="spinner"></span> Signing in…';
+
+      try {
+        const result = await API.login(username, selectedRole);
+
+        if (result && result.success) {
+          Auth.setSession({
+            username: result.user.username,
+            name: result.user.name,
+            role: result.user.role.toLowerCase(),
+            whatsapp: result.user.whatsapp,
+          });
+
+          // Redirect based on role
+          const dest = result.user.role.toLowerCase() === 'hod' ? 'hod.html' : 'teacher.html';
+          window.location.href = dest;
+        } else {
+          showError(result?.message || 'Invalid username or role. Please try again.');
+        }
+      } catch (err) {
+        showError('Could not reach the server. Check your internet connection.');
+        console.error(err);
+      }
+
+      loginBtn.disabled = false;
+      loginBtn.innerHTML = 'Sign In →';
+    });
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.style.display = 'block';
+    }
+  </script>
+</body>
+
+</html>
