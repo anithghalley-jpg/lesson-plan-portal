@@ -54,6 +54,8 @@ function doGet(e) {
       result = handleGetTeacherSubmissions(e.parameter.teacherUsername);
     } else if (action === 'getDomains') {
       result = handleGetDomains();
+    } else if (action === 'getTeacherFolderUrl') {
+      result = handleGetTeacherFolderUrl(e.parameter.teacherName);
     } else {
       return ContentService.createTextOutput("Lesson Plan Portal API is running (Phase 2).");
     }
@@ -328,17 +330,8 @@ function handleSubmitFeedback(data) {
     }
   }
   
-  // 3. Email Notification to Teacher
-  if (teacherEmail) {
-    const subject = `Lesson Plan Feedback: ${fileName}`;
-    let body = `Hello ${teacherName},\n\nThe HOD has reviewed your lesson plan for "${fileName}".\n\nStatus: ${status}\n\n`;
-    if (textFeedback) body += `Text Feedback:\n${textFeedback}\n\n`;
-    if (audioUrl) body += `Voice Feedback Audio Link:\n${audioUrl}\n\n`;
-    if (status === 'In Progress') body += `Please log into the portal, review the feedback, and upload an updated version as soon as possible.\n\n`;
-    body += `Thank you,\nSystem Admin`;
-    
-    MailApp.sendEmail(teacherEmail, subject, body);
-  }
+  // NOTE: Email notification removed per user request. 
+  // HOD must manually click "Remind" to email the teacher.
   
   return { success: true, audioUrl, status };
 }
@@ -370,6 +363,20 @@ function handleSendReminderEmail(data) {
   
   MailApp.sendEmail(teacherDetails.email, subject, body);
   return { success: true };
+}
+
+function handleGetTeacherFolderUrl(teacherName) {
+  try {
+    const parentFolder = DriveApp.getFolderById(CONFIG.LESSON_PLANS_FOLDER_ID);
+    const safeName = String(teacherName || '').replace(/'/g, "\\'");
+    const folders = parentFolder.searchFolders(`title = '${safeName}'`);
+    if (folders.hasNext()) {
+      return { success: true, url: folders.next().getUrl() };
+    }
+    return { success: false, message: "Folder not found." };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
 }
 
 // ==========================================

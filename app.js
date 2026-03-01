@@ -125,6 +125,11 @@ const API = {
     return this.get({ action: 'getTeacherSubmissions', teacherUsername });
   },
 
+  /** Get Teacher's Drive Folder URL */
+  async getTeacherFolderUrl(teacherName) {
+    return this.get({ action: 'getTeacherFolderUrl', teacherName });
+  },
+
   /** Submit text & voice feedback (Phase 2) */
   async submitFeedback(submissionId, teacherUsername, textFeedback, base64Audio, status) {
     return this.post({

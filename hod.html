@@ -485,6 +485,9 @@
             <td>
               <div class="actions-cell">
                 <a href="${r.driveLink}" target="_blank" class="btn btn-ghost btn-sm" onclick="event.stopPropagation()">PDF 🔗</a>
+                <button class="btn btn-ghost btn-sm" title="Open Teacher's Drive Folder" onclick="event.stopPropagation(); openTeacherFolder('${(r.teacherName || '').replace(/'/g, "\\'")}')">
+                  📂 Folder
+                </button>
                 <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openFeedbackModal(${JSON.stringify(r).replace(/"/g, '&quot;')})">
                   📝 Feedback
                 </button>
@@ -518,6 +521,19 @@
                 if (res.success !== false) Toast.show('Reminder sent successfully! ✅', 'success');
                 else Toast.show('Failed: ' + res.message, 'error');
             } catch (err) { Toast.show('Error sending reminder.', 'error'); }
+        }
+
+        // ── Open Teacher Folder ──
+        async function openTeacherFolder(teacherName) {
+            Toast.show('Loading folder link...', 'info');
+            try {
+                const res = await API.getTeacherFolderUrl(teacherName);
+                if (res.success && res.url) {
+                    window.open(res.url, '_blank');
+                } else {
+                    Toast.show('Folder not found yet.', 'error');
+                }
+            } catch (err) { Toast.show('Error loading folder link.', 'error'); }
         }
 
         // ══════════════════════════════════════
