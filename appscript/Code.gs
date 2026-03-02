@@ -7,7 +7,7 @@
 
 const CONFIG = {
   // FOLDER IDs (Create these in Drive and get the ID from the URL)
-  LESSON_PLANS_FOLDER_ID: '1QFIvU9JFjDkKrTnymOwN067Pn9AVpUo0',
+  LESSON_PLANS_FOLDER_ID: '12w9VKIMnyY4gKXdCnGV4y3l5j3p2r4i2',
   VOICE_FEEDBACK_FOLDER_ID: '1jjMh1kmIbyy7xciz-uMqoIaSpYXFNZqx',
 };
 
