@@ -220,7 +220,10 @@ function handleGetSubmissions(hodUsername) {
     const rowDomain = row[8];
     
     // Domain filtering
-    if (hodDomain && String(hodDomain).toLowerCase() !== String(rowDomain).toLowerCase() && String(hodDomain).toLowerCase() !== 'all') {
+    const cleanHodDomain = hodDomain ? String(hodDomain).toLowerCase().trim() : 'all';
+    const cleanRowDomain = rowDomain ? String(rowDomain).toLowerCase().trim() : '';
+    
+    if (cleanHodDomain !== 'all' && cleanHodDomain !== cleanRowDomain) {
       continue;
     }
     
@@ -428,7 +431,10 @@ function notifyDomainHODs(domain, subject, body) {
     
     // Notify if HOD and (Domain matches OR Domain is All/Blank)
     if (rowRole === 'hod' && rowEmail) {
-      if (!rowDomain || String(rowDomain).toLowerCase() === 'all' || String(rowDomain).toLowerCase() === String(domain).toLowerCase()) {
+      const cleanHODDomain = rowDomain ? String(rowDomain).toLowerCase().trim() : 'all';
+      const cleanTargetDomain = domain ? String(domain).toLowerCase().trim() : '';
+
+      if (cleanHODDomain === 'all' || cleanHODDomain === cleanTargetDomain) {
         MailApp.sendEmail(rowEmail, subject, body);
       }
     }
