@@ -157,7 +157,7 @@ function handleUploadLessonPlan(data) {
     results.push({ filename: f.filename, fileUrl, submissionId });
     
     // Notify corresponding HODs for this domain via Email
-    notifyDomainHODs(domain, `New Lesson Plan Submitted`, `Hello,\n\nA new lesson plan has been submitted by ${teacherName} in the ${domain} domain.\n\nFile: ${f.filename}\n\nPlease log into the portal to review it, or view the PDF directly here: ${fileUrl}`);
+    notifyDomainHODs(domain, `New Lesson Plan Submitted`, `Hello,\n\nA new lesson plan has been submitted by ${teacherName} in the ${domain} domain.\n\nFile: ${f.filename}\n\nPlease log into the portal to review it, or view the file directly here: ${fileUrl}`);
   }
   
   return { success: true, files: results };
@@ -223,7 +223,7 @@ function handleGetSubmissions(hodUsername) {
     const cleanHodDomain = hodDomain ? String(hodDomain).toLowerCase().trim() : 'all';
     const cleanRowDomain = rowDomain ? String(rowDomain).toLowerCase().trim() : '';
     
-    if (cleanHodDomain !== 'all' && cleanHodDomain !== cleanRowDomain) {
+    if (cleanHodDomain !== 'all' && cleanRowDomain !== 'all' && cleanRowDomain !== '' && cleanHodDomain !== cleanRowDomain) {
       continue;
     }
     

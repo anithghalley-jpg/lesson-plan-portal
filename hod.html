@@ -348,7 +348,7 @@
                         <div style="font-weight:600; font-size:0.88rem;" id="modal-filename">—</div>
                         <div style="font-size:0.74rem; color:var(--text-secondary);" id="modal-teacher">—</div>
                     </div>
-                    <a id="modal-pdf-link" href="#" target="_blank" class="btn btn-ghost btn-sm">Open PDF 🔗</a>
+                    <a id="modal-pdf-link" href="#" target="_blank" class="btn btn-ghost btn-sm">Open File 🔗</a>
                 </div>
 
                 <!-- Teacher Note Alert -->
@@ -423,10 +423,19 @@
             try {
                 const data = await API.getSubmissions();
                 allSubmissions = data.submissions || [];
+                console.log("Submissions loaded:", allSubmissions);
                 renderTable();
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">⚠️ Error loading data.</div></td></tr>`;
             }
+        }
+
+        function getFileIcon(filename) {
+            const ext = (filename || '').split('.').pop().toLowerCase();
+            if (ext === 'pdf') return '📕';
+            if (['doc', 'docx'].includes(ext)) return '📘';
+            if (['ppt', 'pptx'].includes(ext)) return '📙';
+            return '📄';
         }
 
         function renderTable() {
@@ -474,7 +483,7 @@
                 <div><div>${r.teacherName || r.teacherUsername}</div><div style="font-size:0.7rem; color:var(--text-muted);">${r.domain || 'All'}</div></div>
               </div>
             </td>
-            <td onclick="openFeedbackModal(${JSON.stringify(r).replace(/"/g, '&quot;')})" style="font-weight:500; color:var(--text-primary); max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.fileName}">📄 ${r.fileName || '—'}</td>
+            <td onclick="openFeedbackModal(${JSON.stringify(r).replace(/"/g, '&quot;')})" style="font-weight:500; color:var(--text-primary); max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.fileName}">${getFileIcon(r.fileName)} ${r.fileName || '—'}</td>
             <td onclick="openFeedbackModal(${JSON.stringify(r).replace(/"/g, '&quot;')})">
               <span class="status ${statusClass}" style="margin-bottom:4px;">${r.status || 'Pending'}</span><br/>
               <span style="font-size:0.75rem; color:var(--text-secondary);">${FileUtils.formatDate(r.timestamp)}</span>
@@ -484,7 +493,7 @@
             </td>
             <td>
               <div class="actions-cell">
-                <a href="${r.driveLink}" target="_blank" class="btn btn-ghost btn-sm" onclick="event.stopPropagation()">PDF 🔗</a>
+                <a href="${r.driveLink}" target="_blank" class="btn btn-ghost btn-sm" onclick="event.stopPropagation()">File 🔗</a>
                 <button class="btn btn-ghost btn-sm" title="Open Teacher's Drive Folder" onclick="event.stopPropagation(); openTeacherFolder('${(r.teacherName || '').replace(/'/g, "\\'")}')">
                   📂 Folder
                 </button>
@@ -547,6 +556,7 @@
 
             document.getElementById('modal-subtitle').textContent = `Teacher: ${submission.teacherName}`;
             document.getElementById('modal-filename').textContent = submission.fileName;
+            document.getElementById('pdf-link-card').querySelector('span').textContent = getFileIcon(submission.fileName);
             document.getElementById('modal-teacher').textContent = `Uploaded: ${FileUtils.formatDate(submission.timestamp)}`;
 
             const noteCard = document.getElementById('modal-teachernote-card');

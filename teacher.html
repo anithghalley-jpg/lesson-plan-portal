@@ -235,7 +235,7 @@
             <div class="card fade-in">
                 <div class="card-header">
                     <div class="card-title">📤 Upload Lesson Plans</div>
-                    <div class="card-subtitle">Select multiple PDFs</div>
+                    <div class="card-subtitle">Select multiple Files</div>
                 </div>
 
                 <div class="form-group">
@@ -247,9 +247,9 @@
 
                 <!-- Drop Zone -->
                 <div class="drop-zone" id="drop-zone">
-                    <input type="file" id="pdf-input" accept="application/pdf" multiple />
+                    <input type="file" id="pdf-input" accept=".pdf,.doc,.docx,.pptx" multiple />
                     <div class="drop-icon">📄</div>
-                    <div class="drop-text">Drag &amp; drop PDFs here</div>
+                    <div class="drop-text">Drag &amp; drop Files here</div>
                     <div class="drop-hint">or click to browse multiple files</div>
                 </div>
 
@@ -286,7 +286,7 @@
                         <li>You can select and upload <strong style="color:var(--text-primary);">multiple files at
                                 once</strong>.</li>
                         <li>If a plan is marked <strong style="color:var(--accent-red);">In Progress</strong>, you must
-                            upload a revised PDF.</li>
+                            upload a revised Files.</li>
                         <li>Feedback from HODs will be visible on your dashboard and via Telegram.</li>
                     </ul>
                 </div>
@@ -336,15 +336,15 @@
             <div class="modal-header">
                 <div>
                     <div class="modal-title">🔄 Submit Revision</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary);" id="rev-filename">File.pdf</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);" id="rev-filename">File</div>
                 </div>
                 <button class="modal-close" id="rev-close">✕</button>
             </div>
             <div class="modal-body">
 
                 <div class="form-group">
-                    <label>Upload New PDF</label>
-                    <input type="file" id="rev-file" accept="application/pdf" style="padding:8px;" />
+                    <label>Upload New Files</label>
+                    <input type="file" id="rev-file" accept=".pdf,.doc,.docx,.pptx" style="padding:8px;" />
                 </div>
 
                 <div class="form-group" style="margin-bottom:0;">
@@ -386,6 +386,14 @@
                 select.innerHTML = `<option value="All">General</option>`;
             }
         }
+
+        function getFileIcon(filename) {
+            const ext = (filename || '').split('.').pop().toLowerCase();
+            if (ext === 'pdf') return '📕';
+            if (['doc', 'docx'].includes(ext)) return '📘';
+            if (['ppt', 'pptx'].includes(ext)) return '📙';
+            return '📄';
+        }
         initDomains();
 
         // ── Drop Zone (Multi-file) ──
@@ -405,7 +413,9 @@
         function handleFiles(files) {
             if (!files.length) return;
             for (let f of files) {
-                if (f.type !== 'application/pdf') { Toast.show(`${f.name} is not a PDF`, 'error'); continue; }
+                const ext = f.name.substring(f.name.lastIndexOf('.')).toLowerCase();
+                const allowed = ['.pdf', '.doc', '.docx', '.pptx'];
+                if (!allowed.includes(ext)) { Toast.show(`${f.name} is not as per the format`, 'error'); continue; }
                 if (f.size > 10 * 1024 * 1024) { Toast.show(`${f.name} is over 10MB`, 'error'); continue; }
                 // check dupe
                 if (selectedFiles.find(sf => sf.name === f.name)) continue;
@@ -422,7 +432,7 @@
         function renderFileList() {
             fileListEl.innerHTML = selectedFiles.map((f, i) => `
         <div class="file-chip">
-          <div class="file-chip-icon">📄</div>
+          <div class="file-chip-icon">${getFileIcon(f.name)}</div>
           <div class="file-chip-info">
             <div class="file-chip-name">${f.name}</div>
             <div class="file-chip-size">${FileUtils.formatSize(f.size)}</div>
@@ -501,7 +511,7 @@
                     if (r.voiceLink) feedbackHTML += `<div style="margin-top:8px;"><a href="${r.voiceLink}" target="_blank" class="voice-pill">🎙️ Listen to Voice Feedback</a></div>`;
                     if (!feedbackHTML && r.status === 'Pending') feedbackHTML = `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Waiting for review...</div>`;
 
-                    let actionsHTML = `<a href="${r.driveLink}" target="_blank" class="btn btn-ghost btn-sm">PDF 🔗</a>`;
+                    let actionsHTML = `<a href="${r.driveLink}" target="_blank" class="btn btn-ghost btn-sm">Files 🔗</a>`;
                     if (r.status === 'In Progress') {
                         actionsHTML += `<button class="btn btn-primary btn-sm" onclick="openRevisionModal('${r.id}', '${r.fileName.replace(/'/g, "\\'")}')">🔄 Resolve Needs</button>`;
                     }
@@ -509,7 +519,7 @@
                     return `
             <tr>
               <td>
-                <div style="font-weight:600; color:var(--text-primary); margin-bottom:2px;">📄 ${r.fileName}</div>
+                <div style="font-weight:600; color:var(--text-primary); margin-bottom:2px;">${getFileIcon(r.fileName)} ${r.fileName}</div>
                 <div style="font-size:0.75rem; color:var(--text-muted);">
                   Domain: <strong>${r.domain || 'All'}</strong><br/>
                   Date: ${FileUtils.formatDate(r.timestamp)}
@@ -551,9 +561,11 @@
         document.getElementById('rev-cancel').addEventListener('click', () => revModal.classList.add('hidden'));
 
         revSubmit.addEventListener('click', async () => {
-            if (!revFileInput.files.length) { Toast.show("Please select a new PDF first", "error"); return; }
+            if (!revFileInput.files.length) { Toast.show("Please select a new Files first", "error"); return; }
             const file = revFileInput.files[0];
-            if (file.type !== 'application/pdf') { Toast.show("Must be a PDF", "error"); return; }
+            const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+            const allowed = ['.pdf', '.doc', '.docx', '.pptx'];
+            if (!allowed.includes(ext)) { Toast.show("Must be a valid file format (.pdf, .doc, .docx, .pptx)", "error"); return; }
 
             revSubmit.disabled = true; revSubmit.innerHTML = 'Uploading…';
 
